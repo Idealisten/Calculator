@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>CalculatorClass</class>
- <widget class="QWidget" name="CalculatorClass">
+ <class>Calculator</class>
+ <widget class="QWidget" name="Calculator">
   <property name="geometry">
    <rect>
     <x>0</x>

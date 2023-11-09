@@ -1,6 +1,7 @@
-﻿#include "Calculator.h"
+#include "Calculator.h"
+#include "./ui_Calculator.h"
 #include <QButtonGroup>
-#include <String>
+#include <string>
 #include <iostream>
 #include <queue>
 #include <stack>
@@ -10,7 +11,7 @@
 
 Calculator::Calculator(QWidget *parent)
     : QWidget(parent)
-    , ui(new Ui::CalculatorClass())
+    , ui(new Ui::Calculator())
 {
     ui->setupUi(this);
     initUI();
@@ -36,7 +37,6 @@ void Calculator::initUI()
 
 void Calculator::onButtonGroupClicked(QAbstractButton* btn)
 {
-    //输出到控制台，项目-属性-链接器-系统-子系统-控制台/窗口
     qInfo() << btn->text();
     //根据不同的按钮点击处理不同的逻辑
     //将按钮的上的数字、小数点、运算符直接显示在lineEdit
@@ -52,9 +52,9 @@ void Calculator::onButtonGroupClicked(QAbstractButton* btn)
     else if (name == "DEL")
     {
         ui->lineEdit->setCursorPosition(ui->lineEdit->cursorPosition() - 1);
-        ui->lineEdit->del();
+        ui->lineEdit->del();    //删除光标右侧的字符
     }
-    else//按下等号，执行计算  
+    else//按下等号，执行计算
     {
         //获取lineEdit的文本
         std::string medialExp;
@@ -74,7 +74,7 @@ void Calculator::onButtonGroupClicked(QAbstractButton* btn)
             std::cout << x;
         }
         if (medialExp.length() > 0)
-        {   
+        {
             try
             {
                 //转为后缀表达式
@@ -86,6 +86,7 @@ void Calculator::onButtonGroupClicked(QAbstractButton* btn)
                 int lens = medialExp.length();  //中缀表达式的长度
                 //逐位循环，判断当前位是运算符还是数字
                 //如果是数字，继续向后循环判断下一位是不是数字或小数点，直到不是数字，将每一位数字（0~9）合并为一个数字，并记录下当前数字的长度，下次循环直接跳过当前循环过的数字
+                size_t left_count = 0;
                 size_t i = 0;
                 while (i < lens)
                 {
@@ -100,6 +101,13 @@ void Calculator::onButtonGroupClicked(QAbstractButton* btn)
                         {
                             if ((medialExp[x + j] >= '0' && medialExp[x + j] <= '9') || medialExp[x + j] == '.')
                             {
+                                if(medialExp[x+j]=='.'){
+                                    if(x+j-1 > 0)
+                                    {
+                                        if((medialExp[x+j-1] < '0' || medialExp[x+j-1] > '9'))
+                                            throw "计算式有误";
+                                    }
+                                }
                                 num.push_back(medialExp[x + j]);
                                 i += 1;
                                 j += 1;
@@ -109,6 +117,9 @@ void Calculator::onButtonGroupClicked(QAbstractButton* btn)
                                 break;
                             }
                         }
+                        if(num.length() == 1 && num == "."){
+                            throw"运算表达式错误";
+                        }
                         suffixExp.push(num);
                         i += 1;
                     }
@@ -117,6 +128,7 @@ void Calculator::onButtonGroupClicked(QAbstractButton* btn)
                     {
                         if (medialExp[i] == '(')
                         {
+                            left_count += 1;
                             operatorStack.push(medialExp[i]);
                             if (i + 1 >= lens)
                             {
@@ -129,7 +141,9 @@ void Calculator::onButtonGroupClicked(QAbstractButton* btn)
                         }
                         else if (medialExp[i] == ')')
                         {
-
+                            if (left_count == 0){
+                                throw "括号不匹配错误";
+                            }
                             if (operatorStack.empty())
                             {
                                 throw "计算式有误";
@@ -156,8 +170,8 @@ void Calculator::onButtonGroupClicked(QAbstractButton* btn)
                             {
                                 throw "计算式有误";
                             }
-                            operatorStack.pop();
-
+                            operatorStack.pop();    //(出栈
+                            left_count--;
                         }
                         else  //当前索引值的符号是“+-*/”
                         {
@@ -205,16 +219,26 @@ void Calculator::onButtonGroupClicked(QAbstractButton* btn)
                     }
 
                 }
-                //将运算符栈中剩下的符号加入后缀表达式
 
+                //将运算符栈中剩下的符号加入后缀表达式
                 if (operatorStack.empty())
                 {
                     throw "计算式有误！";
                 }
                 while (!operatorStack.empty())
                 {
+                    char& c = operatorStack.top();
+                    if(c == '('){
+                        left_count++;
+                    }
+                    else if(operatorStack.top() == ')'){
+                        left_count--;
+                    }
                     suffixExp.push(std::string(1, operatorStack.top()));
                     operatorStack.pop();
+                }
+                if(left_count!=0){
+                    throw "括号不匹配错误";
                 }
                 //进行计算，如果表达式不合法弹出对话框提示
                 while (!suffixExp.empty())
@@ -298,7 +322,7 @@ void Calculator::onButtonGroupClicked(QAbstractButton* btn)
         else
         {
             //没有输入任何算式
-        }   
+        }
     }
 }
 /*
